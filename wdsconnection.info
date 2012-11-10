@@ -1,0 +1,7 @@
+; $Id$
+name = WDS Connection
+description = A script that connects drupal with the installed WDS server.
+core = 6.x
+package = "wdsconnection"
+
+version = "6.x-0.1-dev"
