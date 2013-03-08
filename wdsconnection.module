@@ -93,7 +93,8 @@ function wdsconnection_order($op, &$arg1, $arg2) {
         if (substr_count($out, 'successfully') == '1') {
             //output of the command 
             drupal_set_message($out);
-            drupal_set_message('The user ' . $user->name . 'is corectly stored in AD DS of our server.<br> WRITE DOWN YOUR PASSWORD AND USERNAME TO ENTER AT THE INSTALLATION.');
+            drupal_set_message('The user ' . $user->name .
+                    'is corectly stored in AD DS of our server.<br> WRITE DOWN YOUR PASSWORD AND USERNAME TO ENTER AT THE INSTALLATION.');
             //we are stopping the service to reduce server load
             //wdsconnection_service_stop();
         } else {
@@ -117,7 +118,11 @@ function wdsconnection_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
 
             case 'oses';
                 //configure the WDS server with the operating system
-                $command = "wdsutil /add-image /ImageFile:\"C:\wamp\www\\recoveryserver\sites\default\files\\\"" . substr($node->field_iso[0]['filepath'], 20) . "\" /Server:sfitsos-pc.sfitsos.doesntexist.org /ImageType:Install /ImageGroup:" . $node->iimagegroup . " /SingleImage:" . $node->model . " /Name:\"" . $node->title . "\"/Description:\"" . $node->body . "\" /Filename:\"" . substr($node->field_iso[0]['filepath'], 20) . "\"";
+                $command = "wdsutil /add-image /ImageFile:\"C:\wamp\www\\recoveryserver\sites\default\files\\\"" .
+                        substr($node->field_iso[0]['filepath'], 20) .
+                        "\" /Server:yourServer /ImageType:Install /ImageGroup:" .
+                        $node->iimagegroup . " /SingleImage:" . $node->model . " /Name:\"" . $node->title .
+                        "\"/Description:\"" . $node->body . "\" /Filename:\"" . substr($node->field_iso[0]['filepath'], 20) . "\"";
                 //run as service for the x64 systems
                 //wdsconnection_service_start($command);
                 $out = shell_exec($command);
@@ -137,7 +142,10 @@ function wdsconnection_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
             case 'livecds';
                 //configure the WDS server with the current Live CD
                 if (substr($node->field_bootiso[0]['filepath'], -3) == 'wim') {
-                    $boot_command = "wdsutil /add-image /ImageFile:\"C:\wamp\www\\recoveryserver\sites\default\\files\\" . substr($node->field_bootiso[0]['filepath'], 20) . "\" /Server:sfitsos-pc.sfitsos.doesntexist.org /ImageType:Boot /Name:\"" . $node->title . "\" /Description:\"" . $node->body . "\" /Filename:" . $node->model . ".wim";
+                    $boot_command = "wdsutil /add-image /ImageFile:\"C:\wamp\www\\recoveryserver\sites\default\\files\\" .
+                            substr($node->field_bootiso[0]['filepath'], 20) .
+                            "\" /Server:yourServer /ImageType:Boot /Name:\"" .
+                            $node->title . "\" /Description:\"" . $node->body . "\" /Filename:" . $node->model . ".wim";
                     //run as service for the x64 systems
                     wdsconnection_service_start($boot_command);
                     $out = shell_exec($boot_command);
