@@ -1,45 +1,49 @@
 <?php
+
 // $Id$
 /**
-* @file
-* WDSConnection Module.
-*/
-
-/*******************************************************************************
-* Hook Functions (Drupal)
-******************************************************************************/
+ * @file
+ * WDSConnection Module.
+ */
+/* * *****************************************************************************
+ * Hook Functions (Drupal)
+ * **************************************************************************** */
 
 /**
-* Display help and module information
-* @param path which path of the site we're displaying help
-* @param arg array that holds the current path as would be returned from arg() function
-* @return help text for the path
-*/
+ * Display help and module information
+ * @param path which path of the site we're displaying help
+ * @param arg array that holds the current path as would be returned from arg() function
+ * @return help text for the path
+ */
 function wdsconnection_help($path, $arg) {
     //$output = '<p>'.  t("WDSConnection Module creates a connection of the WDS Services and the Recovery Server");
     switch ($path) {
         case "admin/help/wdsconnection":
-        $output = '<p>'.  t("wdsconnection is a module that connects the WDS system on this server with the Drupal Site") .'</p>';
+            $output = '<p>' . t("wdsconnection is a module that connects the WDS system on this server with the Drupal Site") . '</p>';
             break;
     }
     return $output;
-} // function wdsconnection_help
+}
+
+// function wdsconnection_help
 
 /**
-* Valid permissions for this module
-* @return array An array of valid permissions for the wdsconnection module
-*/
+ * Valid permissions for this module
+ * @return array An array of valid permissions for the wdsconnection module
+ */
 function wdsconnection_perm() {
     return array('administer wdsconnection', 'access wdsconnection content');
-} // function wdsconnection_perm()
+}
+
+// function wdsconnection_perm()
 
 /**
-* Menu for this module
-* @return array An array with this module's settings.
-*/
+ * Menu for this module
+ * @return array An array with this module's settings.
+ */
 function wdsconnection_menu() {
     $items = array();
-    
+
     //Link to the wdsconnection admin page:
 
     $items['admin/settings/wdsconnection'] = array(
@@ -49,132 +53,138 @@ function wdsconnection_menu() {
         'access arguments' => array('administer wdsconnection'),
         'type' => MENU_NORMAL_ITEM,
     );
-    
+
     return $items;
 }
 
-
 /**
-*Implementing hook_user in order to acquire and store the passwords
-*in a BALE TABLE EDW in database
-*/
+ * Implementing hook_user in order to acquire and store the passwords
+ * in a BALE TABLE EDW in database
+ */
 function wdsconnection_form_alter(&$form, $form_state, $form_id) {
-if ($form_id == 'user_register') {
-// add additional submit handler
-$form['#submit'][] = 'wdsconnection_aftersubmit'; //additional submit handler
-//this funcation will be executed after drupal executes default submit handler
-// so the user is added and you have the user info in $user object
-}
+    if ($form_id == 'user_register') {
+        // add additional submit handler
+        $form['#submit'][] = 'wdsconnection_aftersubmit'; //additional submit handler
+        //this funcation will be executed after drupal executes default submit handler
+        // so the user is added and you have the user info in $user object
+    }
 }
 
 function wdsconnection_aftersubmit($form, &$form_state) {
-global $user; //user is just added and so we have the user data
-drupal_set_message($user->name);
+    global $user; //user is just added and so we have the user data
+    drupal_set_message($user->name);
 }
 
 /**
-*Command line command for creating a new user
-*implementing the hook_order function
-*and adding him to the appropriate group
-*@param op,arg1,arg2
-*@return array in case of failure
-*/
+ * Command line command for creating a new user
+ * implementing the hook_order function
+ * and adding him to the appropriate group
+ * @param op,arg1,arg2
+ * @return array in case of failure
+ */
 function wdsconnection_order($op, &$arg1, $arg2) {
-	global $user;
-	if ($op=='submit'){
-	//aes password decryption
-	$pass=aes_get_password($user->uid, $decrypt = true);
-	//command to add a user to the AD-DS
-	$command='net user '.$user->name.' '.$pass.' /add';
-	$out= shell_exec($command);
-	if(substr_count($out, 'successfully')=='1'){
-	//output of the command 
-	drupal_set_message($out);
-	drupal_set_message('The user '.$user->name.'is corectly stored in AD DS of our server.<br> WRITE DOWN YOUR PASSWORD AND USERNAME TO ENTER AT THE INSTALLATION.');
-	//we are stopping the service to reduce server load
-	//wdsconnection_service_stop();
-	}
-	else {
-	return array(array('pass' => FALSE, 'message' => t('User either exists, or there is another problem.<br>Try setting up a more difficult password.')));
-	}
-	}
-	}
+    global $user;
+    if ($op == 'submit') {
+        //aes password decryption
+        $pass = aes_get_password($user->uid, $decrypt = true);
+        //command to add a user to the AD-DS
+        $command = 'net user ' . $user->name . ' ' . $pass . ' /add';
+        $out = shell_exec($command);
+        if (substr_count($out, 'successfully') == '1') {
+            //output of the command 
+            drupal_set_message($out);
+            drupal_set_message('The user ' . $user->name . 'is corectly stored in AD DS of our server.<br> WRITE DOWN YOUR PASSWORD AND USERNAME TO ENTER AT THE INSTALLATION.');
+            //we are stopping the service to reduce server load
+            //wdsconnection_service_stop();
+        } else {
+            return array(array('pass' => FALSE, 'message' => t('User either exists, or there is another problem.<br>Try setting up a more difficult password.')));
+        }
+    }
+}
 
-	/**
-	*Function for moving the uploaded image to the d:\images\images
-	*or the uploaded drivers to the package manager 
-	*and running the wdsutil for adding the new image to the system
-	*or the MDT for integrating the drivers, and/or other software
-	*by implementing the hook_insert function
-	*/
-	function wdsconnection_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL){
-	//get the type of the node	
-	//drupal_set_message($node->type);
-	if(($op=="insert")){
-	switch($node->type){
-		
-		case 'oses';
-		//configure the WDS server with the operating system
-		$command="wdsutil /add-image /ImageFile:\"C:\wamp\www\\recoveryserver\sites\default\files\\\"".substr($node->field_iso[0]['filepath'], 20)."\" /Server:sfitsos-pc.sfitsos.doesntexist.org /ImageType:Install /ImageGroup:".$node->iimagegroup." /SingleImage:".$node->model." /Name:\"".$node->title."\"/Description:\"".$node->body."\" /Filename:\"".substr($node->field_iso[0]['filepath'], 20)."\"";
-		//run as service for the x64 systems
-		//wdsconnection_service_start($command);
-		$out= shell_exec($command);
-		break;
-		case 'drivers';
-		//configure the Drivers and Other software with the current tool (MDT-wds)
-		if(substr($node->field_upload[0]['filepath'], -3)=='zip'){
-		}
-		if(substr($node->field_upload[0]['filepath'], -3)=='rar'){
-		}
-		if(substr($node->field_upload[0]['filepath'], -3)=='exe'){
-		}
-		break;
-		case 'livecds';
-		//configure the WDS server with the current Live CD
-		if(substr($node->field_bootiso[0]['filepath'], -3)=='wim'){
-		$boot_command="wdsutil /add-image /ImageFile:\"C:\wamp\www\\recoveryserver\sites\default\\files\\".substr($node->field_bootiso[0]['filepath'], 20)."\" /Server:sfitsos-pc.sfitsos.doesntexist.org /ImageType:Boot /Name:\"".$node->title."\" /Description:\"".$node->body."\" /Filename:".$node->model.".wim";
-		//run as service for the x64 systems
-		wdsconnection_service_start($boot_command);
-		$out= shell_exec($boot_command);
-		drupal_set_message($out);
-		drupal_set_message($boot_command);
-			};
-		if(substr($node->field_iso[0]['filepath'], -3)=='iso'){};
-		break;
-	default ;
-		break;
-		}
-		}
-	}	
+/**
+ * Function for moving the uploaded image to the d:\images\images
+ * or the uploaded drivers to the package manager 
+ * and running the wdsutil for adding the new image to the system
+ * or the MDT for integrating the drivers, and/or other software
+ * by implementing the hook_insert function
+ */
+function wdsconnection_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+    //get the type of the node	
+    //drupal_set_message($node->type);
+    if (($op == "insert")) {
+        switch ($node->type) {
+
+            case 'oses';
+                //configure the WDS server with the operating system
+                $command = "wdsutil /add-image /ImageFile:\"C:\wamp\www\\recoveryserver\sites\default\files\\\"" . substr($node->field_iso[0]['filepath'], 20) . "\" /Server:sfitsos-pc.sfitsos.doesntexist.org /ImageType:Install /ImageGroup:" . $node->iimagegroup . " /SingleImage:" . $node->model . " /Name:\"" . $node->title . "\"/Description:\"" . $node->body . "\" /Filename:\"" . substr($node->field_iso[0]['filepath'], 20) . "\"";
+                //run as service for the x64 systems
+                //wdsconnection_service_start($command);
+                $out = shell_exec($command);
+                break;
+            case 'drivers';
+                //configure the Drivers and Other software with the current tool (MDT-wds)
+                if (substr($node->field_upload[0]['filepath'], -3) == 'zip') {
+                    
+                }
+                if (substr($node->field_upload[0]['filepath'], -3) == 'rar') {
+                    
+                }
+                if (substr($node->field_upload[0]['filepath'], -3) == 'exe') {
+                    
+                }
+                break;
+            case 'livecds';
+                //configure the WDS server with the current Live CD
+                if (substr($node->field_bootiso[0]['filepath'], -3) == 'wim') {
+                    $boot_command = "wdsutil /add-image /ImageFile:\"C:\wamp\www\\recoveryserver\sites\default\\files\\" . substr($node->field_bootiso[0]['filepath'], 20) . "\" /Server:sfitsos-pc.sfitsos.doesntexist.org /ImageType:Boot /Name:\"" . $node->title . "\" /Description:\"" . $node->body . "\" /Filename:" . $node->model . ".wim";
+                    //run as service for the x64 systems
+                    wdsconnection_service_start($boot_command);
+                    $out = shell_exec($boot_command);
+                    drupal_set_message($out);
+                    drupal_set_message($boot_command);
+                };
+                if (substr($node->field_iso[0]['filepath'], -3) == 'iso') {
+                    
+                };
+                break;
+            default;
+                break;
+        }
+    }
+}
+
 /* Because this system does not support calling x64 applications from
-*x32 handlers we add a service named fola which executes the
-*command as a batch file (named fola as well)
-*and we start it
-*@file input the command
-*@return nothing
-*/
-	function wdsconnection_service_start(&$command){
-		$filename='fola.bat';
-		if (is_writable($filename)) {
-		if (!$handle = fopen($filename, 'w')) {
-         drupal_set_message("Cannot open file ($filename)");
-		}
-		if (fwrite($handle, $command) === FALSE) {
-        drupal_set_message("Cannot write to file ($filename)");
-		}
-		drupal_set_message("Success, wrote ($command) to file ($filename)");
-		fclose($handle);
-		} else {
-		drupal_set_message("The file $filename is not writable");
-		}
-		//start the service
-		$out=shell_exec('sc start fola');
-		
-		}
-	/*Stoping of the above service to reduce sources 
-	*inputs nothing , return nothing
-	*/
-	function wdsconnection_service_stop(){
-	//stop the service
-	$out=shell_exec('sc stop fola');
-	}
+ * x32 handlers we add a service named fola which executes the
+ * command as a batch file (named fola as well)
+ * and we start it
+ * @file input the command
+ * @return nothing
+ */
+
+function wdsconnection_service_start(&$command) {
+    $filename = 'fola.bat';
+    if (is_writable($filename)) {
+        if (!$handle = fopen($filename, 'w')) {
+            drupal_set_message("Cannot open file ($filename)");
+        }
+        if (fwrite($handle, $command) === FALSE) {
+            drupal_set_message("Cannot write to file ($filename)");
+        }
+        drupal_set_message("Success, wrote ($command) to file ($filename)");
+        fclose($handle);
+    } else {
+        drupal_set_message("The file $filename is not writable");
+    }
+    //start the service
+    $out = shell_exec('sc start fola');
+}
+
+/* Stoping of the above service to reduce sources 
+ * inputs nothing , return nothing
+ */
+
+function wdsconnection_service_stop() {
+    //stop the service
+    $out = shell_exec('sc stop fola');
+}
