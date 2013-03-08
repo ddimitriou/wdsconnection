@@ -7,13 +7,15 @@ This Module connects Drupal 6.0 and Ubercart with a working setup of Windows Dep
 
 Simple straight-forward installation of module, using the standard way of installing modules.
 
-You might want to have configured properly a Windows Deployment Services on your operating Server.
+You might want to have configured properly a Windows Deployment Service on your operating Server.
 
-Also along with the WDS Server, you will need: 
+Also along with the WDS Server, you will need:
 a) AD DS Service,
 b) a working WAMP Server,
 c) DHCP Service, serving computers inside a subnet,
-d) PXE boot Service on port 67 from the previously mentioned DHCP Server
+d) PXE boot Service on port 67 from the previously mentioned DHCP Server,
+e) Ubercart installed and configured,
+f) A full Drupal Installation with CCK, (and maybe Views)
 
 This software is part of my thesis, and therefore copyright material of University Of Patras.
 

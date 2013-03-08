@@ -4,6 +4,11 @@
 /**
  * @file
  * WDSConnection Module.
+ * 
+ * This File and the whole module is part of a proof-of-concept
+ * creating a manageable system that would connect a Drupal Website
+ * and deploy completely configurable systems through the subnet,
+ * with the ease of buying something inside an e-shop.
  */
 /* * *****************************************************************************
  * Hook Functions (Drupal)
@@ -11,12 +16,13 @@
 
 /**
  * Display help and module information
+ * For now there is not any working help for this module
+ * this is a stub.
  * @param path which path of the site we're displaying help
  * @param arg array that holds the current path as would be returned from arg() function
  * @return help text for the path
  */
 function wdsconnection_help($path, $arg) {
-    //$output = '<p>'.  t("WDSConnection Module creates a connection of the WDS Services and the Recovery Server");
     switch ($path) {
         case "admin/help/wdsconnection":
             $output = '<p>' . t("wdsconnection is a module that connects the WDS system on this server with the Drupal Site") . '</p>';
@@ -25,8 +31,6 @@ function wdsconnection_help($path, $arg) {
     return $output;
 }
 
-// function wdsconnection_help
-
 /**
  * Valid permissions for this module
  * @return array An array of valid permissions for the wdsconnection module
@@ -34,8 +38,6 @@ function wdsconnection_help($path, $arg) {
 function wdsconnection_perm() {
     return array('administer wdsconnection', 'access wdsconnection content');
 }
-
-// function wdsconnection_perm()
 
 /**
  * Menu for this module
@@ -59,7 +61,7 @@ function wdsconnection_menu() {
 
 /**
  * Implementing hook_user in order to acquire and store the passwords
- * in a BALE TABLE EDW in database
+ * in database
  */
 function wdsconnection_form_alter(&$form, $form_state, $form_id) {
     if ($form_id == 'user_register') {
@@ -98,20 +100,23 @@ function wdsconnection_order($op, &$arg1, $arg2) {
             //we are stopping the service to reduce server load
             //wdsconnection_service_stop();
         } else {
-            return array(array('pass' => FALSE, 'message' => t('User either exists, or there is another problem.<br>Try setting up a more difficult password.')));
+            return array(
+                array(
+                    'pass' => FALSE,
+                    'message' => t('User either exists, or there is another problem.<br>Try setting up a more difficult password.')));
         }
     }
 }
 
 /**
  * Function for moving the uploaded image to the d:\images\images
- * or the uploaded drivers to the package manager 
+ * or the uploaded drivers to the package manager
  * and running the wdsutil for adding the new image to the system
  * or the MDT for integrating the drivers, and/or other software
  * by implementing the hook_insert function
  */
 function wdsconnection_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
-    //get the type of the node	
+    //get the type of the node
     //drupal_set_message($node->type);
     if (($op == "insert")) {
         switch ($node->type) {
@@ -130,13 +135,13 @@ function wdsconnection_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
             case 'drivers';
                 //configure the Drivers and Other software with the current tool (MDT-wds)
                 if (substr($node->field_upload[0]['filepath'], -3) == 'zip') {
-                    
+                    //add-load drivers to current setup
                 }
                 if (substr($node->field_upload[0]['filepath'], -3) == 'rar') {
-                    
+                    //add-load drivers to a current setup
                 }
                 if (substr($node->field_upload[0]['filepath'], -3) == 'exe') {
-                    
+                    //add to a current setup
                 }
                 break;
             case 'livecds';
@@ -153,7 +158,7 @@ function wdsconnection_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
                     drupal_set_message($boot_command);
                 };
                 if (substr($node->field_iso[0]['filepath'], -3) == 'iso') {
-                    
+                    //mount the iso file and extract the OS
                 };
                 break;
             default;
@@ -188,7 +193,7 @@ function wdsconnection_service_start(&$command) {
     $out = shell_exec('sc start fola');
 }
 
-/* Stoping of the above service to reduce sources 
+/* Stoping of the above service to reduce sources
  * inputs nothing , return nothing
  */
 
